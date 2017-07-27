@@ -1,0 +1,74 @@
+---
+title: "Shiny App"
+author: "Flavio Angeli"
+date: "27 July 2017"
+output: 
+    ioslides_presentation:
+        fig_height: 4
+        fig_width: 6
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Project
+
+This project is part of the **Developing Data Products** course by Coursera. The goal was to create a Shiny Application.
+
+The Shiny App is available on [ShinyApps]( https://angelf.shinyapps.io/stocksscreener/).
+
+The source code is available on [GitHub](https://github.com/angeliflavio/DataProductsProject.git).
+
+## The App
+
+The App allows you to analyse the stocks of the FTSE MIB, the Italian index including the top 40 companies for market capitalization. The user selects the company and the App downloads the data from Internet. 
+
+- **Chart** shows the historical price of the stocks, with the option to also plot two moving averages of which the user can set the length.
+- **Financials** shows information regarding Financials, Income Statement, Balance Sheet and Valuation Multiples.
+- **Description** explains the company's activity and history.
+
+## The Data {.smaller .flexbox .vcenter}
+```{r warning=FALSE,message=FALSE,echo=TRUE}
+# Esample of getting data for Google and plotting the time series
+library(dygraphs)
+library(quantmod)
+ucg <- getSymbols('GOOGL',auto.assign = F)    #get stock prices for Google
+Ad(ucg) %>% dygraph() %>% dyRangeSelector()   #plot the time series
+```
+
+## server.R and ui.R {.smaller}
+
+The code **server.R** and **ui.R** are available on [GitHub](https://github.com/angeliflavio/DataProductsProject.git). The following is the first part where the App downloads the stock prices and plots the chart. 
+
+```{r eval=FALSE,echo=TRUE}
+shinyServer(function(input, output) {
+    stock <- reactive({
+        x <- Ad(getSymbols(input$stock,auto.assign = FALSE))
+        if (input$ma1){
+            if (input$ma1n<nrow(x)){
+                x$ma1 <- rollapply(x[,1],FUN=function(x)mean(x,na.rm = T),
+                                   width=input$ma1n,align='right')
+            }}
+        if (input$ma2){
+            if (input$ma2n<nrow(x)){
+                x$ma2 <- rollapply(x[,1],FUN=function(x)mean(x,na.rm = T),
+                                   width=input$ma2n,align='right')
+            }}
+        return(x)
+    })
+    output$plot1 <- renderDygraph({
+        x <- stock()
+        s <- input$stock
+        dygraph(x,main = s) %>% dyRangeSelector()
+    })
+```
+
+
+
+
+
+
+
+
+
